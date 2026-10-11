@@ -1,3 +1,6 @@
+
+import { requireSupabase } from '@/lib/supabaseClient'
+
 export interface ChapterData {
   id: number
   mangaId: number
@@ -6,397 +9,214 @@ export interface ChapterData {
   images: string[]
 }
 
-const STORAGE_PREFIX =
-  'mangaverse_chapters_'
+type ChapterRow = {
+  id: number | string
+  manga_id: number | string
+  chapter_number: number | string
+  title: string | null
+  chapter_images?: {
+    image_path: string
+    image_order: number
+  }[] | null
+}
 
 export class ChapterService {
-  /* =========================
-     Storage Key
-  ========================= */
+  private mapRow(row: ChapterRow): ChapterData {
+    const images = [...(row.chapter_images ?? [])]
+      .sort((a, b) => a.image_order - b.image_order)
+      .map((image) => image.image_path)
 
-  private getStorageKey(
-    mangaId: number,
-  ): string {
-    return `${STORAGE_PREFIX}${mangaId}`
-  }
-
-  /* =========================
-     Load Chapters
-  ========================= */
-
-  private loadChapters(
-    mangaId: number,
-  ): ChapterData[] {
-    const saved =
-      localStorage.getItem(
-        this.getStorageKey(mangaId),
-      )
-
-    if (!saved) {
-      return []
-    }
-
-    try {
-      const parsed =
-        JSON.parse(saved)
-
-      if (!Array.isArray(parsed)) {
-        return []
-      }
-
-      return parsed
-        .map((chapter) => {
-          const images =
-            Array.isArray(
-              chapter.images,
-            )
-              ? chapter.images
-                  .map((image: unknown) =>
-                    String(image),
-                  )
-                  .filter(
-                    (image: string) =>
-                      image.length > 0,
-                  )
-              : []
-
-          return {
-            id: Number(
-              chapter.id,
-            ),
-
-            mangaId:
-              Number(
-                chapter.mangaId ??
-                  mangaId,
-              ),
-
-            chapterNumber:
-              Number(
-                chapter.chapterNumber ??
-                  chapter.number ??
-                  0,
-              ),
-
-            title: String(
-              chapter.title ?? '',
-            ),
-
-            images,
-          }
-        })
-        .filter(
-          (chapter) =>
-            Number.isFinite(
-              chapter.id,
-            ) &&
-            Number.isFinite(
-              chapter.chapterNumber,
-            ),
-        )
-    } catch (error) {
-      console.error(
-        'ไม่สามารถโหลด Chapter ได้:',
-        error,
-      )
-
-      return []
+    return {
+      id: Number(row.id),
+      mangaId: Number(row.manga_id),
+      chapterNumber: Number(row.chapter_number),
+      title: row.title ?? '',
+      images,
     }
   }
 
-  /* =========================
-     Save Chapters
-  ========================= */
+  async getByMangaId(mangaId: number): Promise<ChapterData[]> {
+    const supabase = requireSupabase()
 
-  private saveChapters(
-    mangaId: number,
-    chapters: ChapterData[],
-  ): boolean {
-    try {
-      localStorage.setItem(
-        this.getStorageKey(mangaId),
-        JSON.stringify(chapters),
-      )
+    const { data, error } = await supabase
+      .from('chapters')
+      .select(`
+        id,
+        manga_id,
+        chapter_number,
+        title,
+        chapter_images (
+          image_path,
+          image_order
+        )
+      `)
+      .eq('manga_id', mangaId)
+      .order('chapter_number', { ascending: false })
 
-      return true
-    } catch (error) {
-      console.error(
-        'ไม่สามารถบันทึก Chapter ได้:',
-        error,
-      )
+    if (error) throw error
 
-      return false
-    }
+    return ((data ?? []) as unknown as ChapterRow[])
+      .map((row) => this.mapRow(row))
   }
 
-  /* =========================
-     Get Chapters By Manga
-  ========================= */
+  async getById(chapterId: number): Promise<ChapterData | undefined> {
+    const supabase = requireSupabase()
 
-  getByMangaId(
-    mangaId: number,
-  ): ChapterData[] {
-    return this.loadChapters(
-      mangaId,
-    )
+    const { data, error } = await supabase
+      .from('chapters')
+      .select(`
+        id,
+        manga_id,
+        chapter_number,
+        title,
+        chapter_images (
+          image_path,
+          image_order
+        )
+      `)
+      .eq('id', chapterId)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) return undefined
+
+    return this.mapRow(data as unknown as ChapterRow)
   }
 
-  /* =========================
-     Get Chapter By ID
-  ========================= */
-
-  getById(
-    chapterId: number,
-  ): ChapterData | undefined {
-    const chapters =
-      this.getAllChapters()
-
-    return chapters.find(
-      (chapter) =>
-        chapter.id === chapterId,
-    )
-  }
-
-  /* =========================
-     Get All Chapters
-  ========================= */
-
-  private getAllChapters(): ChapterData[] {
-    const allChapters: ChapterData[] =
-      []
-
-    for (
-      let index = 0;
-      index < localStorage.length;
-      index++
-    ) {
-      const key =
-        localStorage.key(index)
-
-      if (
-        !key ||
-        !key.startsWith(
-          STORAGE_PREFIX,
-        )
-      ) {
-        continue
-      }
-
-      const mangaId =
-        Number(
-          key.replace(
-            STORAGE_PREFIX,
-            '',
-          ),
-        )
-
-      if (
-        !Number.isFinite(
-          mangaId,
-        )
-      ) {
-        continue
-      }
-
-      const chapters =
-        this.loadChapters(
-          mangaId,
-        )
-
-      allChapters.push(
-        ...chapters,
-      )
-    }
-
-    return allChapters
-  }
-
-  /* =========================
-     Create Chapter
-  ========================= */
-
-  create(
+  async create(
     mangaId: number,
     chapterNumber: number,
     title: string,
     images: string[] = [],
-  ): ChapterData | null {
-    const chapters =
-      this.loadChapters(
-        mangaId,
-      )
+  ): Promise<ChapterData | null> {
+    const supabase = requireSupabase()
 
-    /* ป้องกันเลขตอนซ้ำ */
-    const duplicate =
-      chapters.some(
-        (chapter) =>
-          chapter.chapterNumber ===
-          chapterNumber,
-      )
+    const { data: existing, error: checkError } = await supabase
+      .from('chapters')
+      .select('id')
+      .eq('manga_id', mangaId)
+      .eq('chapter_number', chapterNumber)
+      .maybeSingle()
 
-    if (duplicate) {
-      return null
-    }
+    if (checkError) throw checkError
+    if (existing) return null
 
-    const newChapter: ChapterData =
-      {
-        id: Date.now(),
-        mangaId,
-        chapterNumber,
+    const { data: chapter, error } = await supabase
+      .from('chapters')
+      .insert({
+        manga_id: mangaId,
+        chapter_number: chapterNumber,
         title: title.trim(),
-        images: [...images],
+      })
+      .select('id, manga_id, chapter_number, title')
+      .single()
+
+    if (error) throw error
+
+    if (images.length > 0) {
+      const rows = images.map((imagePath, index) => ({
+        chapter_id: chapter.id,
+        image_path: imagePath,
+        image_order: index + 1,
+      }))
+
+      const { error: imageError } = await supabase
+        .from('chapter_images')
+        .insert(rows)
+
+      if (imageError) {
+        // Avoid leaving an empty chapter if saving its images fails.
+        await supabase.from('chapters').delete().eq('id', chapter.id)
+        throw imageError
       }
-
-    chapters.push(
-      newChapter,
-    )
-
-    const saved =
-      this.saveChapters(
-        mangaId,
-        chapters,
-      )
-
-    if (!saved) {
-      return null
     }
 
-    return newChapter
+    return this.getById(Number(chapter.id)) as Promise<ChapterData>
   }
 
-  /* =========================
-     Update Chapter
-  ========================= */
+  async update(updated: ChapterData): Promise<boolean> {
+    const supabase = requireSupabase()
 
-  update(
-    updatedChapter: ChapterData,
-  ): boolean {
-    const chapters =
-      this.loadChapters(
-        updatedChapter.mangaId,
-      )
+    const { data: duplicate, error: checkError } = await supabase
+      .from('chapters')
+      .select('id')
+      .eq('manga_id', updated.mangaId)
+      .eq('chapter_number', updated.chapterNumber)
+      .neq('id', updated.id)
+      .maybeSingle()
 
-    const index =
-      chapters.findIndex(
-        (chapter) =>
-          chapter.id ===
-          updatedChapter.id,
-      )
+    if (checkError) throw checkError
+    if (duplicate) return false
 
-    if (index === -1) {
-      return false
+    const { error } = await supabase
+      .from('chapters')
+      .update({
+        chapter_number: updated.chapterNumber,
+        title: updated.title.trim(),
+      })
+      .eq('id', updated.id)
+
+    if (error) throw error
+
+    const { error: deleteImagesError } = await supabase
+      .from('chapter_images')
+      .delete()
+      .eq('chapter_id', updated.id)
+
+    if (deleteImagesError) throw deleteImagesError
+
+    if (updated.images.length > 0) {
+      const rows = updated.images.map((imagePath, index) => ({
+        chapter_id: updated.id,
+        image_path: imagePath,
+        image_order: index + 1,
+      }))
+
+      const { error: insertImagesError } = await supabase
+        .from('chapter_images')
+        .insert(rows)
+
+      if (insertImagesError) throw insertImagesError
     }
 
-    /* ป้องกันเลขตอนซ้ำ */
-    const duplicate =
-      chapters.some(
-        (chapter) =>
-          chapter.id !==
-            updatedChapter.id &&
-          chapter.chapterNumber ===
-            updatedChapter.chapterNumber,
-      )
-
-    if (duplicate) {
-      return false
-    }
-
-    chapters[index] = {
-      id: updatedChapter.id,
-      mangaId:
-        updatedChapter.mangaId,
-      chapterNumber:
-        updatedChapter.chapterNumber,
-      title:
-        updatedChapter.title.trim(),
-      images: [
-        ...updatedChapter.images,
-      ],
-    }
-
-    return this.saveChapters(
-      updatedChapter.mangaId,
-      chapters,
-    )
+    return true
   }
 
-  /* =========================
-     Delete Chapter
-  ========================= */
+  async delete(chapterId: number): Promise<boolean> {
+    const supabase = requireSupabase()
 
-  delete(
-    chapterId: number,
-  ): boolean {
-    const chapter =
-      this.getById(
-        chapterId,
-      )
+    const { data, error } = await supabase
+      .from('chapters')
+      .delete()
+      .eq('id', chapterId)
+      .select('id')
 
-    if (!chapter) {
-      return false
-    }
-
-    const chapters =
-      this.loadChapters(
-        chapter.mangaId,
-      )
-
-    const index =
-      chapters.findIndex(
-        (item) =>
-          item.id ===
-          chapterId,
-      )
-
-    if (index === -1) {
-      return false
-    }
-
-    chapters.splice(
-      index,
-      1,
-    )
-
-    return this.saveChapters(
-      chapter.mangaId,
-      chapters,
-    )
+    if (error) throw error
+    return (data?.length ?? 0) > 0
   }
 
-  /* =========================
-     Latest Chapter
-  ========================= */
-
-  getLatestChapter(
+  async getLatestChapter(
     mangaId: number,
-  ): ChapterData | undefined {
-    const chapters =
-      this.loadChapters(
-        mangaId,
-      )
-
-    if (
-      chapters.length === 0
-    ) {
-      return undefined
-    }
-
-    return [...chapters].sort(
-      (a, b) =>
-        b.chapterNumber -
-        a.chapterNumber,
-    )[0]
+  ): Promise<ChapterData | undefined> {
+    const chapters = await this.getByMangaId(mangaId)
+    return chapters.reduce<ChapterData | undefined>(
+      (latest, chapter) =>
+        !latest || chapter.chapterNumber > latest.chapterNumber
+          ? chapter
+          : latest,
+      undefined,
+    )
   }
 
-  /* =========================
-     Chapter Count
-  ========================= */
+  async getChapterCount(mangaId: number): Promise<number> {
+    const supabase = requireSupabase()
 
-  getChapterCount(
-    mangaId: number,
-  ): number {
-    return this.loadChapters(
-      mangaId,
-    ).length
+    const { count, error } = await supabase
+      .from('chapters')
+      .select('id', { count: 'exact', head: true })
+      .eq('manga_id', mangaId)
+
+    if (error) throw error
+    return count ?? 0
   }
 }

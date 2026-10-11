@@ -18,6 +18,7 @@ import { useBookshelfStore } from '@/stores/bookshelf'
 import { useAuthStore } from '@/stores/auth'
 
 import { useReadingHistoryStore } from '@/stores/readingHistory'
+import { ChapterService } from '@/services/chapterService'
 
 
 interface AdminChapter {
@@ -79,133 +80,36 @@ const manga = computed(() => {
 
 
 /* ========================================
-   Chapter Storage
+   Chapters (Supabase)
 ======================================== */
 
-const chapterStorageKey =
-  computed(() => {
+const chapterService = new ChapterService()
+const chapters = ref<AdminChapter[]>([])
 
-    return `mangaverse_chapters_${mangaId.value}`
-
-  })
-
-
-/* ========================================
-   Load Chapters
-======================================== */
-
-function loadChapters(): AdminChapter[] {
-
-  const saved =
-    localStorage.getItem(
-      chapterStorageKey.value,
-    )
-
-  if (!saved) {
-
-    return []
-
+async function loadChapters() {
+  const id = mangaId.value
+  if (!Number.isFinite(id) || id <= 0) {
+    chapters.value = []
+    return
   }
 
   try {
-
-    const parsed =
-      JSON.parse(saved)
-
-    if (!Array.isArray(parsed)) {
-
-      return []
-
-    }
-
-    return parsed
-
-      .map((chapter) => {
-
-        const images =
-          Array.isArray(
-            chapter.images,
-          )
-
-            ? chapter.images
-                .map(
-                  (image: unknown) =>
-                    String(image),
-                )
-                .filter(
-                  (image: string) =>
-                    image.length > 0,
-                )
-
-            : []
-
-        const imageCount =
-          images.length > 0
-
-            ? images.length
-
-            : Number(
-                chapter.imageCount ?? 0,
-              )
-
-        return {
-
-          id:
-            Number(
-              chapter.id,
-            ),
-
-          number:
-            Number(
-              chapter.number,
-            ),
-
-          title:
-            String(
-              chapter.title ?? '',
-            ),
-
-          imageCount,
-
-          images,
-
-        }
-
-      })
-
-      .filter(
-        (chapter) =>
-          Number.isFinite(
-            chapter.id,
-          ) &&
-          Number.isFinite(
-            chapter.number,
-          ),
-      )
-
-  } catch {
-
-    return []
-
+    const rows = await chapterService.getByMangaId(id)
+    if (id !== mangaId.value) return
+    chapters.value = rows.map((chapter) => ({
+      id: chapter.id,
+      number: chapter.chapterNumber,
+      title: chapter.title,
+      imageCount: chapter.images.length,
+      images: [...chapter.images],
+    }))
+  } catch (error) {
+    console.error('โหลดตอนสำหรับอ่านไม่สำเร็จ:', error)
+    chapters.value = []
   }
-
 }
 
-
-/* ========================================
-   Chapters
-======================================== */
-
-const chapters =
-  computed(() => {
-
-    return loadChapters().sort(
-      (a, b) =>
-        a.number - b.number,
-    )
-
-  })
-
+watch(mangaId, () => { void loadChapters() }, { immediate: true })
 
 /* ========================================
    Current Chapter

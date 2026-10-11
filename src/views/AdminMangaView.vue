@@ -33,6 +33,7 @@ const route = useRoute()
 const mangaService = new MangaService()
 await mangaService.ready.catch((error) => console.error('โหลดมังงะไม่สำเร็จ', error))
 const chapterService = new ChapterService()
+const chapters = ref<AdminChapter[]>([])
 
 /* =========================
    Manga
@@ -229,28 +230,22 @@ function toast(
    Load Chapters
 ========================= */
 
-function loadChapters():
-  AdminChapter[] {
-  return chapterService
-    .getByMangaId(mangaId)
-    .map((chapter) => ({
-      id: chapter.id,
-      mangaId: chapter.mangaId,
-      number:
-        chapter.chapterNumber,
-      title: chapter.title,
-      imageCount:
-        chapter.images.length,
-      images: [
-        ...chapter.images,
-      ],
-    }))
+
+async function loadChapters(): Promise<AdminChapter[]> {
+  const rows = await chapterService.getByMangaId(mangaId)
+
+  return rows.map((chapter) => ({
+    id: chapter.id,
+    mangaId: chapter.mangaId,
+    number: chapter.chapterNumber,
+    title: chapter.title,
+    imageCount: chapter.images.length,
+    images: [...chapter.images],
+  }))
 }
 
-const chapters =
-  ref<AdminChapter[]>(
-    loadChapters(),
-  )
+
+void loadChapters().then((rows) => { chapters.value = rows }).catch((error) => console.error('โหลดตอนแอดมินไม่สำเร็จ', error))
 
 /* =========================
    Sorted Chapters
@@ -652,7 +647,7 @@ async function saveChapter() {
 
     if (wasEditing) {
       const chapter =
-        chapterService.getById(
+        await chapterService.getById(
           editingChapterId.value!,
         )
 
@@ -674,9 +669,9 @@ async function saveChapter() {
       ]
 
       if (
-        !chapterService.update(
+        !(await chapterService.update(
           chapter,
-        )
+        ))
       ) {
         toast(
           'ไม่สามารถแก้ไขตอนนี้ได้',
@@ -685,7 +680,7 @@ async function saveChapter() {
       }
     } else {
       const created =
-        chapterService.create(
+        await chapterService.create(
           mangaId,
           number,
           title,
@@ -701,7 +696,7 @@ async function saveChapter() {
     }
 
     chapters.value =
-      loadChapters()
+      await loadChapters()
 
     updateLatestChapter()
 
@@ -731,11 +726,11 @@ async function saveChapter() {
    Delete Chapter
 ========================= */
 
-function deleteChapter(
+async function deleteChapter(
   chapterId: number,
 ) {
   const chapter =
-    chapterService.getById(
+    await chapterService.getById(
       chapterId,
     )
 
@@ -756,9 +751,9 @@ function deleteChapter(
   }
 
   if (
-    !chapterService.delete(
+    !(await chapterService.delete(
       chapterId,
-    )
+    ))
   ) {
     toast(
       'ไม่สามารถลบตอนนี้ได้',
@@ -767,7 +762,7 @@ function deleteChapter(
   }
 
   chapters.value =
-    loadChapters()
+    await loadChapters()
 
   updateLatestChapter()
 
@@ -786,7 +781,7 @@ async function updateLatestChapter() {
   }
 
   const latest =
-    chapterService.getLatestChapter(
+    await chapterService.getLatestChapter(
       mangaId,
     )
 

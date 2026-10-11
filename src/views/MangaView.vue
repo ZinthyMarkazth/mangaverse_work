@@ -3,6 +3,7 @@
 import {
   computed,
   ref,
+  watch,
 } from 'vue'
 
 import {
@@ -15,15 +16,7 @@ import { useCustomCategoryStore } from '@/stores/customCategory'
 import { useAuthStore } from '@/stores/auth'
 import { useReadingHistoryStore } from '@/stores/readingHistory'
 import { MangaService } from '@/services/MangaService'
-
-
-interface AdminChapter {
-  id: number
-  number: number
-  title: string
-  imageCount: number
-}
-
+import { ChapterService } from '@/services/chapterService'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,6 +28,8 @@ const readingHistoryStore = useReadingHistoryStore()
 
 const mangaService = new MangaService()
 void mangaService.ready.catch((error) => console.error('โหลดมังงะไม่สำเร็จ', error))
+
+
 
 
 /* ========================================
@@ -63,55 +58,43 @@ const manga = computed(() => {
    Chapters
 ======================================== */
 
-const chapterStorageKey = computed(() => {
-  return `mangaverse_chapters_${mangaId.value}`
-})
+const chapterService = new ChapterService()
+const chapters = ref<{
+  id: number
+  number: number
+  title: string
+  imageCount: number
+}[]>([])
 
-const chapters = computed<AdminChapter[]>(() => {
+async function loadChapters() {
+  const id = mangaId.value
 
-  const saved = localStorage.getItem(
-    chapterStorageKey.value,
-  )
-
-  if (!saved) {
-    return []
+  if (!Number.isFinite(id) || id <= 0) {
+    chapters.value = []
+    return
   }
 
   try {
+    const rows = await chapterService.getByMangaId(id)
 
-    const parsed = JSON.parse(saved)
+    // ป้องกันผลลัพธ์ของมังงะเก่าทับหน้าที่เปิดอยู่
+    if (id !== mangaId.value) return
 
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-
-    return parsed
-      .map((chapter) => ({
-        id: Number(chapter.id),
-        number: Number(chapter.number),
-        title: String(
-          chapter.title ?? '',
-        ),
-        imageCount: Number(
-          chapter.imageCount ?? 0,
-        ),
-      }))
-      .filter(
-        (chapter) =>
-          Number.isFinite(chapter.id) &&
-          Number.isFinite(chapter.number),
-      )
-      .sort(
-        (a, b) =>
-          b.number - a.number,
-      )
-
-  } catch {
-
-    return []
-
+    chapters.value = rows.map((chapter) => ({
+      id: chapter.id,
+      number: chapter.chapterNumber,
+      title: chapter.title,
+      imageCount: chapter.images.length,
+    }))
+  } catch (error) {
+    console.error('โหลดตอนมังงะไม่สำเร็จ:', error)
+    chapters.value = []
   }
-})
+}
+
+watch(mangaId, () => {
+  void loadChapters()
+}, { immediate: true })
 
 
 /* ========================================
