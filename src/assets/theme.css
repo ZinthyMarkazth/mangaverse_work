@@ -1,0 +1,629 @@
+/* ========================================
+   Global Reset
+======================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+
+  overflow-x: hidden;
+
+  font-family:
+    Arial,
+    'Noto Sans Thai',
+    sans-serif;
+
+  background: #f7f7f8;
+  color: #18181b;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+
+/* ========================================
+   Basic Elements
+======================================== */
+
+img {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  max-width: 100%;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+/* ========================================
+   Common Container
+======================================== */
+
+.page-container {
+  width: 86%;
+  max-width: 1300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* ========================================
+   Navbar Responsive
+======================================== */
+
+@media (max-width: 1200px) {
+
+  .navbar-inner {
+    width: 92% !important;
+    gap: 30px !important;
+  }
+
+  .nav-menu {
+    gap: 20px !important;
+  }
+
+  .search-box input {
+    width: 190px !important;
+  }
+}
+
+
+/* ========================================
+   Laptop
+======================================== */
+
+@media (max-width: 1000px) {
+
+  .page-container,
+  .main-content {
+    width: 92% !important;
+  }
+
+  .navbar-inner {
+    width: 92% !important;
+    gap: 24px !important;
+  }
+
+  .nav-menu {
+    gap: 16px !important;
+  }
+
+  .search-box input {
+    width: 170px !important;
+  }
+
+  /* Home */
+
+  .hero {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .hero h1 {
+    font-size: 42px !important;
+  }
+
+  .manga-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+
+  /* Manga Detail */
+
+  .manga-detail,
+  .detail-container {
+    width: 92% !important;
+  }
+
+
+  /* Admin */
+
+  .admin-container,
+  .admin-content {
+    width: 92% !important;
+  }
+}
+
+
+/* ========================================
+   Tablet
+======================================== */
+
+@media (max-width: 800px) {
+
+  .page-container,
+  .main-content {
+    width: 94% !important;
+  }
+
+
+  /* Navbar */
+
+  .navbar-inner {
+    width: 94% !important;
+    gap: 18px !important;
+  }
+
+  .logo {
+    font-size: 24px !important;
+  }
+
+  .nav-menu {
+    gap: 12px !important;
+  }
+
+  .nav-link {
+    font-size: 14px !important;
+  }
+
+  .search-box input {
+    width: 145px !important;
+  }
+
+
+  /* Home */
+
+  .hero-content {
+    max-width: 600px;
+  }
+
+  .hero h1 {
+    font-size: 38px !important;
+  }
+
+
+  /* Cards */
+
+  .manga-grid {
+    gap: 16px !important;
+  }
+
+
+  /* Latest */
+
+  .latest-item {
+    gap: 12px !important;
+  }
+
+
+  /* Tables */
+
+  .table-wrapper,
+  .admin-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+
+  /* Forms */
+
+  .form-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* ========================================
+   Mobile
+======================================== */
+
+@media (max-width: 650px) {
+
+  .page-container,
+  .main-content {
+    width: 92% !important;
+  }
+
+
+  /* ======================================
+     Navbar
+  ====================================== */
+
+  .user-navbar {
+    height: auto !important;
+  }
+
+  .navbar-inner {
+    width: 92% !important;
+    min-height: 72px;
+
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+
+    gap: 10px !important;
+
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-size: 23px !important;
+  }
+
+  .navbar-right {
+    margin-left: auto !important;
+  }
+
+  .search-box {
+    display: none !important;
+  }
+
+  .nav-menu {
+    order: 3;
+
+    width: 100%;
+
+    justify-content: center;
+
+    gap: 20px !important;
+
+    padding-top: 4px;
+  }
+
+
+  /* ======================================
+     Home Hero
+  ====================================== */
+
+  .hero {
+    min-height: auto !important;
+  }
+
+  .hero-content {
+    width: 100%;
+    padding-top: 55px !important;
+    padding-bottom: 55px !important;
+  }
+
+  .hero h1 {
+    font-size: 34px !important;
+    line-height: 1.25 !important;
+  }
+
+  .description {
+    font-size: 14px !important;
+  }
+
+  .hero-buttons {
+    flex-wrap: wrap;
+  }
+
+
+  /* ======================================
+     Manga Grid
+  ====================================== */
+
+  .manga-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+
+    gap: 12px !important;
+  }
+
+  .cover-wrapper {
+    height: 220px !important;
+  }
+
+  .card-content {
+    padding: 12px !important;
+  }
+
+  .card-content h3 {
+    font-size: 16px !important;
+  }
+
+
+  /* ======================================
+     Latest
+  ====================================== */
+
+  .latest-item {
+    gap: 10px !important;
+    padding: 10px !important;
+  }
+
+  .latest-item img {
+    width: 55px !important;
+    height: 70px !important;
+  }
+
+  .latest-info h3 {
+    font-size: 15px !important;
+  }
+
+  .latest-info p {
+    font-size: 12px !important;
+  }
+
+  .read-btn {
+    padding-left: 13px !important;
+    padding-right: 13px !important;
+  }
+
+
+  /* ======================================
+     Section
+  ====================================== */
+
+  .section {
+    padding-top: 40px !important;
+  }
+
+  .section-header h2 {
+    font-size: 24px !important;
+  }
+
+  .view-all {
+    font-size: 13px !important;
+  }
+
+
+  /* ======================================
+     Login / Register
+  ====================================== */
+
+  .login-container {
+    padding: 30px 16px !important;
+  }
+
+  .login-card {
+    width: 100% !important;
+    max-width: 430px !important;
+
+    padding: 30px 22px !important;
+  }
+
+  .login-card h1 {
+    font-size: 26px !important;
+  }
+
+  .form-group input {
+    width: 100% !important;
+  }
+
+
+  /* ======================================
+     Bookshelf
+  ====================================== */
+
+  .bookshelf-container,
+  .bookshelf-content {
+    width: 92% !important;
+  }
+
+  .bookshelf-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+
+    gap: 12px !important;
+  }
+
+
+  /* ======================================
+     Admin
+  ====================================== */
+
+  .admin-container,
+  .admin-content {
+    width: 92% !important;
+  }
+
+  .admin-stats,
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .admin-table-wrapper {
+    overflow-x: auto !important;
+  }
+
+  .admin-table {
+    min-width: 700px;
+  }
+
+
+  /* ======================================
+     Manga Detail
+  ====================================== */
+
+  .manga-detail,
+  .detail-container {
+    width: 92% !important;
+  }
+
+  .manga-detail-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .manga-cover {
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+
+  /* ======================================
+     Reader
+  ====================================== */
+
+  .reader-container {
+    width: 100% !important;
+  }
+
+  .reader-page {
+    width: 100% !important;
+  }
+
+  .reader-page img {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .reader-header {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .chapter-nav {
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+}
+
+
+/* ========================================
+   Small Mobile
+======================================== */
+
+@media (max-width: 450px) {
+
+  .page-container,
+  .main-content {
+    width: 94% !important;
+  }
+
+
+  /* Navbar */
+
+  .logo {
+    font-size: 21px !important;
+  }
+
+  .nav-menu {
+    gap: 12px !important;
+  }
+
+  .nav-link {
+    font-size: 13px !important;
+  }
+
+
+  /* Hero */
+
+  .hero h1 {
+    font-size: 30px !important;
+  }
+
+  .small-title {
+    font-size: 11px !important;
+  }
+
+  .description {
+    font-size: 13px !important;
+  }
+
+
+  /* Manga */
+
+  .manga-grid {
+    gap: 8px !important;
+  }
+
+  .cover-wrapper {
+    height: 190px !important;
+  }
+
+  .card-content h3 {
+    font-size: 15px !important;
+  }
+
+  .card-content p {
+    font-size: 12px !important;
+  }
+
+
+  /* Latest */
+
+  .latest-item img {
+    width: 48px !important;
+    height: 62px !important;
+  }
+
+  .latest-info h3 {
+    font-size: 14px !important;
+  }
+
+  .read-btn {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+
+  /* Login */
+
+  .login-card {
+    padding: 25px 18px !important;
+  }
+
+
+  /* Admin */
+
+  .admin-stats,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* ========================================
+   Very Small Mobile
+======================================== */
+
+@media (max-width: 360px) {
+
+  .page-container,
+  .main-content {
+    width: 94% !important;
+  }
+
+  .logo {
+    font-size: 19px !important;
+  }
+
+  .nav-menu {
+    gap: 8px !important;
+  }
+
+  .nav-link {
+    font-size: 12px !important;
+  }
+
+  .hero h1 {
+    font-size: 27px !important;
+  }
+
+  .manga-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cover-wrapper {
+    height: 300px !important;
+  }
+}
