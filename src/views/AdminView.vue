@@ -95,6 +95,7 @@ const completedTotal = computed(() => {
 ========================= */
 
 const showAddModal = ref(false)
+const isAddingManga = ref(false)
 
 const form = reactive<{
   title: string
@@ -152,6 +153,7 @@ function closeAddModal() {
 ========================= */
 
 async function addManga() {
+  if (isAddingManga.value) return
   if (!form.title.trim()) {
     toast('กรุณากรอกชื่อมังงะ')
     return
@@ -168,7 +170,7 @@ async function addManga() {
   }
 
   const newManga = new Manga(
-    Date.now(),
+    '',
     form.title.trim(),
     form.author.trim(),
     form.description.trim(),
@@ -178,6 +180,7 @@ async function addManga() {
     form.cover.trim(),
   )
 
+  isAddingManga.value = true
   try {
     const created = await mangaService.createManga(newManga)
     if (!created) { toast('เพิ่มมังงะไม่สำเร็จ ตรวจสอบสิทธิ์ผู้ดูแลระบบ'); return }
@@ -187,6 +190,8 @@ async function addManga() {
   } catch (error) {
     console.error(error)
     toast('เชื่อมต่อฐานข้อมูลไม่สำเร็จ')
+  } finally {
+    isAddingManga.value = false
   }
 }
 
@@ -194,7 +199,7 @@ async function addManga() {
    Manage Manga
 ========================= */
 
-function manageManga(id: number) {
+function manageManga(id: string | number) {
   router.push(`/admin/manga/${id}`)
 }
 
@@ -202,7 +207,7 @@ function manageManga(id: number) {
    Delete Manga
 ========================= */
 
-async function deleteManga(id: number) {
+async function deleteManga(id: string | number) {
   const manga =
     mangaService.getMangaById(id)
 

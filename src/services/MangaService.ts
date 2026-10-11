@@ -30,14 +30,14 @@ function statusToDatabase(value: unknown): 'ongoing' | 'completed' | 'hiatus' {
 
 function fromRow(row: Record<string, unknown>): Manga {
   return new Manga(
-    Number(row.id),
+    String(row.id ?? ''),
     String(row.title ?? ''),
     String(row.author ?? ''),
     String(row.description ?? ''),
     String(row.category ?? ''),
     Number(row.latest_chapter ?? 0),
     statusFromDatabase(row.status),
-    String(row.cover_path ?? ''),
+    String(row.cover_url ?? row.cover_path ?? ''),
   )
 }
 
@@ -49,7 +49,7 @@ function toRow(manga: Manga) {
     category: manga.category.trim(),
     latest_chapter: Number(manga.latestChapter) || 0,
     status: statusToDatabase(manga.status),
-    cover_path: manga.cover.trim() || null,
+    cover_url: manga.cover.trim() || null,
   }
 }
 
@@ -74,7 +74,7 @@ export class MangaService {
     }
     const { data, error } = await requireSupabase()
       .from('manga')
-      .select('id,title,author,description,category,latest_chapter,status,cover_path')
+      .select('id,title,author,description,category,latest_chapter,status,cover_url,cover_path')
       .order('created_at', { ascending: false })
     if (error) {
       console.error('โหลดมังงะจาก Supabase ไม่สำเร็จ:', error.message)
@@ -87,14 +87,19 @@ export class MangaService {
   return [...mangaList.value]
 }
 
-getMangaById(id: number): Manga | undefined {
+getMangaById(id: string | number): Manga | undefined {
   return mangaList.value.find(
-    (manga: Manga) => Number(manga.id) === Number(id)
+    (manga: Manga) => String(manga.id) === String(id)
   )
 }
 
   async createManga(manga: Manga): Promise<boolean> {
-    const { data, error } = await requireSupabase()
+    const supabase = requireSupabase()
+    const title = manga.title.trim()
+    const { data: duplicate, error: duplicateError } = await supabase.from('manga').select('id').ilike('title', title).limit(1)
+    if (duplicateError) { console.error('ตรวจชื่อมังงะซ้ำไม่สำเร็จ:', duplicateError.message); return false }
+    if (duplicate?.length) { console.error('มีมังงะชื่อนี้อยู่แล้ว'); return false }
+    const { data, error } = await supabase
       .from('manga').insert(toRow(manga)).select().single()
     if (error) {
       console.error('เพิ่มมังงะไม่สำเร็จ:', error.message)
@@ -116,7 +121,7 @@ getMangaById(id: number): Manga | undefined {
     return true
   }
 
-  async deleteManga(id: number): Promise<boolean> {
+  async deleteManga(id: string | number): Promise<boolean> {
     const { error } = await requireSupabase().from('manga').delete().eq('id', id)
     if (error) {
       console.error('ลบมังงะไม่สำเร็จ:', error.message)
@@ -130,7 +135,7 @@ getMangaById(id: number): Manga | undefined {
 export async function getMangaList() {
   const { data, error } = await requireSupabase()
     .from('manga')
-    .select('id,title,author,description,category,latest_chapter,status,cover_path,created_at')
+    .select('id,title,author,description,category,latest_chapter,status,cover_url,cover_path,created_at')
     .order('created_at', { ascending: false })
   if (error) throw error
   return data ?? []

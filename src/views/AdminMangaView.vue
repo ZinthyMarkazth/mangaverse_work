@@ -19,19 +19,19 @@ type MangaStatus =
   | 'จบแล้ว'
 
 interface AdminChapter {
-  id: number
+  id: string
   number: number
   title: string
   imageCount: number
   images: string[]
-  mangaId: number
+  mangaId: string
 }
 
 const router = useRouter()
 const route = useRoute()
 
 const mangaService = new MangaService()
-await mangaService.ready.catch((error) => console.error('โหลดมังงะไม่สำเร็จ', error))
+void mangaService.ready.catch((error) => console.error('โหลดมังงะไม่สำเร็จ', error))
 const chapterService = new ChapterService()
 const chapters = ref<AdminChapter[]>([])
 
@@ -39,7 +39,7 @@ const chapters = ref<AdminChapter[]>([])
    Manga
 ========================= */
 
-const mangaId = Number(route.params.id)
+const mangaId = String(route.params.id ?? '')
 
 const manga =
   mangaService.getMangaById(mangaId)
@@ -287,7 +287,7 @@ const showChapterModal =
   ref(false)
 
 const editingChapterId =
-  ref<number | null>(null)
+  ref<string | null>(null)
 
 const isSavingChapter =
   ref(false)
@@ -326,7 +326,12 @@ function goBack() {
    Save Manga
 ========================= */
 
+const isSavingManga = ref(false)
+
 async function saveManga() {
+  if (isSavingManga.value) return
+  isSavingManga.value = true
+  try {
   if (!manga) {
     return
   }
@@ -392,6 +397,7 @@ async function saveManga() {
   toast(
     'บันทึกข้อมูลมังงะเรียบร้อยแล้ว',
   )
+  } finally { isSavingManga.value = false }
 }
 
 /* =========================
@@ -738,7 +744,7 @@ async function saveChapter() {
 ========================= */
 
 async function deleteChapter(
-  chapterId: number,
+  chapterId: string,
 ) {
   const chapter =
     await chapterService.getById(

@@ -1,7 +1,7 @@
 import { Content } from './Content'
 
 export class Manga extends Content {
-  private _id: number
+  private _id: string
   private _title: string
   private _author: string
   private _description: string
@@ -11,7 +11,7 @@ export class Manga extends Content {
   private _cover: string
 
   constructor(
-    id: number,
+    id: string | number,
     title: string,
     author: string,
     description: string,
@@ -22,7 +22,7 @@ export class Manga extends Content {
   ) {
     super()
 
-    this._id = id
+    this._id = String(id)
     this._title = title
     this._author = author
     this._description = description
@@ -32,7 +32,7 @@ export class Manga extends Content {
     this._cover = cover
   }
 
-  get id(): number {
+  get id(): string {
     return this._id
   }
 

@@ -59,7 +59,7 @@ readingHistoryStore.load()
 
 const mangaId = computed(() => {
 
-  return Number(route.params.id)
+  return String(route.params.id ?? '')
 
 })
 
@@ -71,7 +71,7 @@ const mangaId = computed(() => {
 const manga = computed(() => {
 
   return mangaService.getMangaById(
-    mangaId.value,
+    mangaId.value as unknown as number,
   )
 
 })
@@ -294,13 +294,13 @@ function updateReadingProgress() {
 
   const exists =
     bookshelfStore.isInBookshelf(
-      mangaId.value,
+      mangaId.value as unknown as number,
     )
 
   if (exists) {
 
     bookshelfStore.updateChapter(
-      mangaId.value,
+      mangaId.value as unknown as number,
       currentChapter.value,
     )
 
@@ -361,7 +361,7 @@ function updateReadingProgress() {
 
     authStore.userId,
 
-    mangaId.value,
+    mangaId.value as unknown as number,
 
     chapter.id,
 

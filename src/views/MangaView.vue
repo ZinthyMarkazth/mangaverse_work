@@ -19,7 +19,7 @@ import { MangaService } from '@/services/MangaService'
 import { ChapterService } from '@/services/chapterService'
 
 interface AdminChapter {
-  id: number
+  id: string
   number: number
   title: string
   imageCount: number
@@ -52,12 +52,12 @@ readingHistoryStore.load()
 ======================================== */
 
 const mangaId = computed(() => {
-  return Number(route.params.id)
+  return String(route.params.id ?? '')
 })
 
 const manga = computed(() => {
   return mangaService.getMangaById(
-    mangaId.value,
+    mangaId.value as unknown as number,
   )
 })
 
@@ -72,7 +72,7 @@ const chapterStorageKey = computed(() => {
 
 const chapterService = new ChapterService()
 const chapters = ref<{
-  id: number
+  id: string
   number: number
   title: string
   imageCount: number
@@ -81,7 +81,7 @@ const chapters = ref<{
 async function loadChapters() {
   const id = mangaId.value
 
-  if (!Number.isFinite(id) || id <= 0) {
+  if (!id || id === 'undefined') {
     chapters.value = []
     return
   }
@@ -125,7 +125,7 @@ const lastReadingHistory = computed(() => {
 
   return readingHistoryStore.getLastChapter(
     authStore.userId,
-    mangaId.value,
+    mangaId.value as unknown as number,
   )
 })
 
@@ -145,7 +145,7 @@ const lastReadChapter = computed(() => {
 
   return chapters.value.find(
     (chapter) =>
-      chapter.id === history.chapterId,
+      String(chapter.id) === String(history.chapterId),
   )
 })
 
@@ -179,7 +179,7 @@ const readButtonText = computed(() => {
 const isInBookshelf = computed(() => {
 
   return bookshelfStore.isInBookshelf(
-    mangaId.value,
+    mangaId.value as unknown as number,
   )
 
 })
@@ -219,7 +219,7 @@ function readChapter(
   }
 
   bookshelfStore.updateChapter(
-    manga.value.id,
+    manga.value.id as unknown as number,
     chapter,
   )
 
@@ -274,7 +274,7 @@ function toggleBookshelf() {
   if (isInBookshelf.value) {
 
     bookshelfStore.removeFromBookshelf(
-      manga.value.id,
+      manga.value.id as unknown as number,
     )
 
     return
@@ -282,7 +282,7 @@ function toggleBookshelf() {
 
   bookshelfStore.addToBookshelf({
 
-    id: manga.value.id,
+    id: manga.value.id as unknown as number,
 
     title: manga.value.title,
 
@@ -358,7 +358,7 @@ function addMangaToFolder() {
   const added =
     customCategoryStore.addMangaToCategory(
       selectedCategoryId.value,
-      manga.value.id,
+      manga.value.id as unknown as number,
     )
 
   if (!added) {

@@ -2,33 +2,33 @@
 import { requireSupabase } from '@/lib/supabaseClient'
 
 export interface ChapterData {
-  id: number
-  mangaId: number
+  id: string
+  mangaId: string
   chapterNumber: number
   title: string
   images: string[]
 }
 
 type ChapterRow = {
-  id: number | string
-  manga_id: number | string
+  id: string
+  manga_id: string
   chapter_number: number | string
   title: string | null
   chapter_images?: {
-    image_path: string
-    image_order: number
+    image_url: string
+    page_number: number
   }[] | null
 }
 
 export class ChapterService {
   private mapRow(row: ChapterRow): ChapterData {
     const images = [...(row.chapter_images ?? [])]
-      .sort((a, b) => a.image_order - b.image_order)
-      .map((image) => image.image_path)
+      .sort((a, b) => a.page_number - b.page_number)
+      .map((image) => image.image_url)
 
     return {
-      id: Number(row.id),
-      mangaId: Number(row.manga_id),
+      id: String(row.id),
+      mangaId: String(row.manga_id),
       chapterNumber: Number(row.chapter_number),
       title: row.title ?? '',
       images,
@@ -37,24 +37,24 @@ export class ChapterService {
 
   // Load chapter metadata and image counts only. Do not download every page image
   // just to render the admin list (legacy Base64 images can freeze the browser).
-  async getAdminListByMangaId(mangaId: number): Promise<{ id: number; mangaId: number; chapterNumber: number; title: string; imageCount: number }[]> {
+  async getAdminListByMangaId(mangaId: string): Promise<{ id: string; mangaId: string; chapterNumber: number; title: string; imageCount: number }[]> {
     const supabase = requireSupabase()
     const { data, error } = await supabase
       .from('chapters')
-      .select('id,manga_id,chapter_number,title,chapter_images(image_order)')
+      .select('id,manga_id,chapter_number,title,chapter_images(page_number)')
       .eq('manga_id', mangaId)
       .order('chapter_number', { ascending: false })
     if (error) throw error
     return (data ?? []).map((row: any) => ({
-      id: Number(row.id),
-      mangaId: Number(row.manga_id),
+      id: String(row.id),
+      mangaId: String(row.manga_id),
       chapterNumber: Number(row.chapter_number),
       title: row.title ?? '',
       imageCount: Array.isArray(row.chapter_images) ? row.chapter_images.length : 0,
     }))
   }
 
-  async getByMangaId(mangaId: number): Promise<ChapterData[]> {
+  async getByMangaId(mangaId: string): Promise<ChapterData[]> {
     const supabase = requireSupabase()
 
     const { data, error } = await supabase
@@ -65,8 +65,8 @@ export class ChapterService {
         chapter_number,
         title,
         chapter_images (
-          image_path,
-          image_order
+          image_url,
+          page_number
         )
       `)
       .eq('manga_id', mangaId)
@@ -78,7 +78,7 @@ export class ChapterService {
       .map((row) => this.mapRow(row))
   }
 
-  async getById(chapterId: number): Promise<ChapterData | undefined> {
+  async getById(chapterId: string): Promise<ChapterData | undefined> {
     const supabase = requireSupabase()
 
     const { data, error } = await supabase
@@ -89,8 +89,8 @@ export class ChapterService {
         chapter_number,
         title,
         chapter_images (
-          image_path,
-          image_order
+          image_url,
+          page_number
         )
       `)
       .eq('id', chapterId)
@@ -103,7 +103,7 @@ export class ChapterService {
   }
 
   async create(
-    mangaId: number,
+    mangaId: string,
     chapterNumber: number,
     title: string,
     images: string[] = [],
@@ -135,8 +135,8 @@ export class ChapterService {
     if (images.length > 0) {
       const rows = images.map((imagePath, index) => ({
         chapter_id: chapter.id,
-        image_path: imagePath,
-        image_order: index + 1,
+        image_url: imagePath,
+        page_number: index + 1,
       }))
 
       const { error: imageError } = await supabase
@@ -150,7 +150,7 @@ export class ChapterService {
       }
     }
 
-    return this.getById(Number(chapter.id)) as Promise<ChapterData>
+    return this.getById(String(chapter.id)) as Promise<ChapterData>
   }
 
   async update(updated: ChapterData): Promise<boolean> {
@@ -187,8 +187,8 @@ export class ChapterService {
     if (updated.images.length > 0) {
       const rows = updated.images.map((imagePath, index) => ({
         chapter_id: updated.id,
-        image_path: imagePath,
-        image_order: index + 1,
+        image_url: imagePath,
+        page_number: index + 1,
       }))
 
       const { error: insertImagesError } = await supabase
@@ -201,7 +201,7 @@ export class ChapterService {
     return true
   }
 
-  async delete(chapterId: number): Promise<boolean> {
+  async delete(chapterId: string): Promise<boolean> {
     const supabase = requireSupabase()
 
     const { data, error } = await supabase
@@ -215,7 +215,7 @@ export class ChapterService {
   }
 
   async getLatestChapter(
-    mangaId: number,
+    mangaId: string,
   ): Promise<ChapterData | undefined> {
     const chapters = await this.getByMangaId(mangaId)
     return chapters.reduce<ChapterData | undefined>(
@@ -227,7 +227,7 @@ export class ChapterService {
     )
   }
 
-  async getChapterCount(mangaId: number): Promise<number> {
+  async getChapterCount(mangaId: string): Promise<number> {
     const supabase = requireSupabase()
 
     const { count, error } = await supabase
