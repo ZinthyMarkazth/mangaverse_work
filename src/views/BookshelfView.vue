@@ -56,12 +56,12 @@ function goHome() {
   router.push('/')
 }
 
-function openManga(id: number) {
+function openManga(id: string | number) {
   router.push(`/manga/${id}`)
 }
 
 function continueReading(
-  id: number,
+  id: string | number,
   chapter: number,
 ) {
   router.push(
@@ -74,7 +74,7 @@ function continueReading(
 ========================= */
 
 function removeFromBookshelf(
-  id: number,
+  id: string | number,
 ) {
   bookshelfStore.removeFromBookshelf(id)
 }

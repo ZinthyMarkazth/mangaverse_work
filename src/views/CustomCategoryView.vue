@@ -32,7 +32,7 @@ const mangaList = computed(() => {
   return category.value.mangaIds
     .map((mangaId) => {
       return mangaService.getMangaById(
-        Number(mangaId),
+        String(mangaId),
       )
     })
     .filter(
@@ -46,7 +46,7 @@ function goBack() {
   })
 }
 
-function openManga(id: number) {
+function openManga(id: string | number) {
   router.push({
     name: 'manga',
     params: {
@@ -56,7 +56,7 @@ function openManga(id: number) {
 }
 
 function removeFromCategory(
-  mangaId: number,
+  mangaId: string | number,
 ) {
   customCategoryStore.removeMangaFromCategory(
     categoryId.value,
@@ -108,7 +108,7 @@ function removeFromCategory(
           class="manga-cover"
           @click="
             openManga(
-              Number(manga.id),
+              String(manga.id),
             )
           "
         >
@@ -128,7 +128,7 @@ function removeFromCategory(
             class="remove-button"
             @click="
               removeFromCategory(
-                Number(manga.id),
+                String(manga.id),
               )
             "
           >

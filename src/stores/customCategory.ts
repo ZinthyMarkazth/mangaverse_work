@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 export interface CustomCategoryItem {
   id: number
   name: string
-  mangaIds: number[]
+  mangaIds: (string | number)[]
 }
 
 const STORAGE_KEY =
@@ -44,7 +44,7 @@ export const useCustomCategoryStore =
         isMangaInCategory: (state) => {
           return (
             categoryId: number,
-            mangaId: number,
+            mangaId: string | number,
           ) => {
             const category =
               state.categories.find(
@@ -56,9 +56,7 @@ export const useCustomCategoryStore =
               return false
             }
 
-            return category.mangaIds.includes(
-              mangaId,
-            )
+            return category.mangaIds.some((id) => String(id) === String(mangaId))
           }
         },
 
@@ -187,7 +185,7 @@ export const useCustomCategoryStore =
 
         addMangaToCategory(
           categoryId: number,
-          mangaId: number,
+          mangaId: string | number,
         ) {
           const category =
             this.categories.find(
@@ -200,9 +198,7 @@ export const useCustomCategoryStore =
           }
 
           if (
-            category.mangaIds.includes(
-              mangaId,
-            )
+            category.mangaIds.some((id) => String(id) === String(mangaId))
           ) {
             return false
           }
@@ -218,7 +214,7 @@ export const useCustomCategoryStore =
 
         removeMangaFromCategory(
           categoryId: number,
-          mangaId: number,
+          mangaId: string | number,
         ) {
           const category =
             this.categories.find(
@@ -232,7 +228,7 @@ export const useCustomCategoryStore =
 
           category.mangaIds =
             category.mangaIds.filter(
-              (id) => id !== mangaId,
+              (id) => String(id) !== String(mangaId),
             )
 
           this.saveCategories()
@@ -241,7 +237,7 @@ export const useCustomCategoryStore =
         },
 
         removeMangaFromAllCategories(
-          mangaId: number,
+          mangaId: string | number,
         ) {
           let changed = false
 
@@ -253,7 +249,7 @@ export const useCustomCategoryStore =
               category.mangaIds =
                 category.mangaIds.filter(
                   (id) =>
-                    id !== mangaId,
+                    String(id) !== String(mangaId),
                 )
 
               if (
@@ -316,14 +312,7 @@ function loadCategories(): CustomCategoryItem[] {
           )
             ? (
                 category.mangaIds as unknown[]
-              )
-                .map((id: unknown) =>
-                  Number(id),
-                )
-                .filter(
-                  (id: number) =>
-                    Number.isFinite(id),
-                )
+              ).map((id: unknown) => String(id))
             : [],
       }))
       .filter(

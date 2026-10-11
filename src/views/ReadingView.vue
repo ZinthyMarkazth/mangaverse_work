@@ -18,204 +18,62 @@ import { useBookshelfStore } from '@/stores/bookshelf'
 import { useAuthStore } from '@/stores/auth'
 
 import { useReadingHistoryStore } from '@/stores/readingHistory'
+import { ChapterService } from '@/services/chapterService'
 
 
 interface AdminChapter {
-  id: number
+  id: string
   number: number
   title: string
   imageCount: number
   images: string[]
+  chapterId: string
 }
 
 const route = useRoute()
-
 const router = useRouter()
-
-const mangaService =
-  new MangaService()
+const mangaService = new MangaService()
 void mangaService.ready.catch((error) => console.error('โหลดมังงะไม่สำเร็จ', error))
-
-const bookshelfStore =
-  useBookshelfStore()
-
-const authStore =
-  useAuthStore()
-
-const readingHistoryStore =
-  useReadingHistoryStore()
-
-
-/* ========================================
-   Load Reading History
-======================================== */
-
+const chapterService = new ChapterService()
+const bookshelfStore = useBookshelfStore()
+const authStore = useAuthStore()
+const readingHistoryStore = useReadingHistoryStore()
 readingHistoryStore.load()
 
+const mangaId = computed(() => String(route.params.id ?? ''))
+const manga = computed(() => mangaService.getMangaById(mangaId.value))
+const chapters = ref<AdminChapter[]>([])
+const currentChapter = ref<number>(Number(route.params.chapter) || 1)
 
-/* ========================================
-   Manga ID
-======================================== */
-
-const mangaId = computed(() => {
-
-  return String(route.params.id ?? '')
-
-})
-
-
-/* ========================================
-   Manga
-======================================== */
-
-const manga = computed(() => {
-
-  return mangaService.getMangaById(
-    mangaId.value as unknown as number,
-  )
-
-})
-
-
-/* ========================================
-   Chapter Storage
-======================================== */
-
-const chapterStorageKey =
-  computed(() => {
-
-    return `mangaverse_chapters_${mangaId.value}`
-
-  })
-
-
-/* ========================================
-   Load Chapters
-======================================== */
-
-function loadChapters(): AdminChapter[] {
-
-  const saved =
-    localStorage.getItem(
-      chapterStorageKey.value,
-    )
-
-  if (!saved) {
-
-    return []
-
+async function loadChapters() {
+  const id = mangaId.value
+  if (!id) {
+    chapters.value = []
+    return
   }
-
   try {
-
-    const parsed =
-      JSON.parse(saved)
-
-    if (!Array.isArray(parsed)) {
-
-      return []
-
+    const rows = await chapterService.getByMangaId(id)
+    if (id !== mangaId.value) return
+    chapters.value = rows.map((chapter) => ({
+      id: chapter.id,
+      chapterId: chapter.id,
+      number: chapter.chapterNumber,
+      title: chapter.title,
+      imageCount: chapter.images.length,
+      images: chapter.images,
+    })).sort((a, b) => a.number - b.number)
+    if (chapters.value.length && !chapters.value.some(c => c.number === currentChapter.value)) {
+      currentChapter.value = chapters.value[0]?.number ?? currentChapter.value
+      if (String(route.params.chapter) !== String(currentChapter.value)) {
+        await router.replace(`/manga/${id}/chapter/${currentChapter.value}`)
+      }
     }
-
-    return parsed
-
-      .map((chapter) => {
-
-        const images =
-          Array.isArray(
-            chapter.images,
-          )
-
-            ? chapter.images
-                .map(
-                  (image: unknown) =>
-                    String(image),
-                )
-                .filter(
-                  (image: string) =>
-                    image.length > 0,
-                )
-
-            : []
-
-        const imageCount =
-          images.length > 0
-
-            ? images.length
-
-            : Number(
-                chapter.imageCount ?? 0,
-              )
-
-        return {
-
-          id:
-            Number(
-              chapter.id,
-            ),
-
-          number:
-            Number(
-              chapter.number,
-            ),
-
-          title:
-            String(
-              chapter.title ?? '',
-            ),
-
-          imageCount,
-
-          images,
-
-        }
-
-      })
-
-      .filter(
-        (chapter) =>
-          Number.isFinite(
-            chapter.id,
-          ) &&
-          Number.isFinite(
-            chapter.number,
-          ),
-      )
-
-  } catch {
-
-    return []
-
+  } catch (error) {
+    console.error('โหลดตอนจาก Supabase ไม่สำเร็จ:', error)
+    chapters.value = []
   }
-
 }
-
-
-/* ========================================
-   Chapters
-======================================== */
-
-const chapters =
-  computed(() => {
-
-    return loadChapters().sort(
-      (a, b) =>
-        a.number - b.number,
-    )
-
-  })
-
-
-/* ========================================
-   Current Chapter
-======================================== */
-
-const currentChapter =
-  ref<number>(
-    Number(
-      route.params.chapter,
-    ) || 1,
-  )
+watch(mangaId, () => { void loadChapters() }, { immediate: true })
 
 
 /* ========================================
@@ -294,13 +152,13 @@ function updateReadingProgress() {
 
   const exists =
     bookshelfStore.isInBookshelf(
-      mangaId.value as unknown as number,
+      mangaId.value,
     )
 
   if (exists) {
 
     bookshelfStore.updateChapter(
-      mangaId.value as unknown as number,
+      mangaId.value,
       currentChapter.value,
     )
 
@@ -361,9 +219,9 @@ function updateReadingProgress() {
 
     authStore.userId,
 
-    mangaId.value as unknown as number,
+    mangaId.value,
 
-    chapter.id,
+    Number(chapter.id),
 
   )
 

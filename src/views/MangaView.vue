@@ -219,7 +219,7 @@ function readChapter(
   }
 
   bookshelfStore.updateChapter(
-    manga.value.id as unknown as number,
+    manga.value.id,
     chapter,
   )
 
@@ -274,7 +274,7 @@ function toggleBookshelf() {
   if (isInBookshelf.value) {
 
     bookshelfStore.removeFromBookshelf(
-      manga.value.id as unknown as number,
+      manga.value.id,
     )
 
     return
@@ -282,7 +282,7 @@ function toggleBookshelf() {
 
   bookshelfStore.addToBookshelf({
 
-    id: manga.value.id as unknown as number,
+    id: manga.value.id,
 
     title: manga.value.title,
 
@@ -358,7 +358,7 @@ function addMangaToFolder() {
   const added =
     customCategoryStore.addMangaToCategory(
       selectedCategoryId.value,
-      manga.value.id as unknown as number,
+      manga.value.id,
     )
 
   if (!added) {

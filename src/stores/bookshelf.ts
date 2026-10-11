@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 
 export interface BookshelfManga {
-  id: number
+  id: string | number
   title: string
   cover: string
   chapter: number
@@ -16,9 +16,9 @@ export const useBookshelfStore = defineStore('bookshelf', {
 
   getters: {
     isInBookshelf: (state) => {
-      return (mangaId: number) => {
+      return (mangaId: string | number) => {
         return state.mangaList.some(
-          (manga) => manga.id === mangaId,
+          (manga) => String(manga.id) === String(mangaId),
         )
       }
     },
@@ -27,7 +27,7 @@ export const useBookshelfStore = defineStore('bookshelf', {
   actions: {
     addToBookshelf(manga: BookshelfManga) {
       const exists = this.mangaList.some(
-        (item) => item.id === manga.id,
+        (item) => String(item.id) === String(manga.id),
       )
 
       if (exists) {
@@ -43,7 +43,7 @@ export const useBookshelfStore = defineStore('bookshelf', {
       return true
     },
 
-    removeFromBookshelf(mangaId: number) {
+    removeFromBookshelf(mangaId: string | number) {
       this.mangaList = this.mangaList.filter(
         (manga) => manga.id !== mangaId,
       )
@@ -52,7 +52,7 @@ export const useBookshelfStore = defineStore('bookshelf', {
     },
 
     updateChapter(
-      mangaId: number,
+      mangaId: string | number,
       chapter: number,
     ) {
       const manga = this.mangaList.find(
@@ -98,7 +98,7 @@ function loadBookshelf(): BookshelfManga[] {
     }
 
     return parsed.map((manga) => ({
-      id: Number(manga.id),
+      id: String(manga.id),
       title: String(manga.title),
       cover: String(manga.cover),
       chapter: Number(manga.chapter),

@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 export interface ReadingHistoryData {
   id: number
   userId: number
-  mangaId: number
+  mangaId: string | number
   chapterId: number
   readAt: string
 }
@@ -53,7 +53,7 @@ export const useReadingHistoryStore =
 
       saveReading(
         userId: number,
-        mangaId: number,
+        mangaId: string | number,
         chapterId: number,
       ) {
         if (userId <= 0) {
@@ -98,7 +98,7 @@ export const useReadingHistoryStore =
 
       getLastChapter(
         userId: number,
-        mangaId: number,
+        mangaId: string | number,
       ) {
         return this.histories.find(
           (history) =>
@@ -109,7 +109,7 @@ export const useReadingHistoryStore =
 
       removeHistory(
         userId: number,
-        mangaId: number,
+        mangaId: string | number,
       ) {
         this.histories =
           this.histories.filter(
