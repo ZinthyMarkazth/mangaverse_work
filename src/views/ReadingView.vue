@@ -19,7 +19,6 @@ import { useAuthStore } from '@/stores/auth'
 
 import { useReadingHistoryStore } from '@/stores/readingHistory'
 
-import { ChapterService } from '@/services/chapterService'
 
 interface AdminChapter {
   id: number
@@ -28,45 +27,6 @@ interface AdminChapter {
   imageCount: number
   images: string[]
 }
-
-const chapterService = new ChapterService()
-const chapters = ref<{
-  id: number
-  number: number
-  title: string
-  imageCount: number
-  images: string[]
-}[]>([])
-
-async function loadChapters() {
-  const id = mangaId.value
-
-  if (!Number.isFinite(id) || id <= 0) {
-    chapters.value = []
-    return
-  }
-
-  try {
-    const rows = await chapterService.getByMangaId(id)
-
-    if (id !== mangaId.value) return
-
-    chapters.value = rows.map((chapter) => ({
-      id: chapter.id,
-      number: chapter.chapterNumber,
-      title: chapter.title,
-      imageCount: chapter.images.length,
-      images: chapter.images,
-    }))
-  } catch (error) {
-    console.error('โหลดตอนสำหรับอ่านไม่สำเร็จ:', error)
-    chapters.value = []
-  }
-}
-
-watch(mangaId, () => {
-  void loadChapters()
-}, { immediate: true })
 
 const route = useRoute()
 

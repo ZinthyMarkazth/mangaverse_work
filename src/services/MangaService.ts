@@ -7,21 +7,23 @@ let loadPromise: Promise<void> | null = null
 
 function statusFromDatabase(value: unknown): string {
   switch (String(value ?? '').toLowerCase()) {
+    case 'ongoing': return 'กำลังดำเนินเรื่อง'
     case 'completed': return 'จบแล้ว'
     case 'hiatus': return 'พักการเขียน'
-    case 'ongoing': return 'กำลังดำเนินเรื่อง'
+    // รองรับข้อมูลเก่าที่บันทึกเป็นภาษาไทยไว้แล้ว
+    case 'กำลังดำเนินเรื่อง': return 'กำลังดำเนินเรื่อง'
     case 'จบแล้ว': return 'จบแล้ว'
     case 'พักการเขียน': return 'พักการเขียน'
     default: return 'กำลังดำเนินเรื่อง'
   }
 }
 
-function statusToDatabase(value: string): string {
-  switch (value) {
-    case 'จบแล้ว':
-    case 'completed': return 'completed'
-    case 'พักการเขียน':
-    case 'hiatus': return 'hiatus'
+function statusToDatabase(value: unknown): 'ongoing' | 'completed' | 'hiatus' {
+  switch (String(value ?? '').toLowerCase()) {
+    case 'completed':
+    case 'จบแล้ว': return 'completed'
+    case 'hiatus':
+    case 'พักการเขียน': return 'hiatus'
     default: return 'ongoing'
   }
 }

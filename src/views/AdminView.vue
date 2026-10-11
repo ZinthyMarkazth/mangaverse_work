@@ -3,12 +3,11 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Manga } from '../models/Manga'
 import { MangaService } from '@/services/MangaService'
-import { uploadMangaImage } from '@/services/imageUploadService'
 
 const router = useRouter()
 const mangaService = new MangaService()
 
-type MangaStatus = 'กำลังดำเนินเรื่อง' | 'จบแล้ว' | 'พักการเขียน'
+type MangaStatus = 'กำลังดำเนินเรื่อง' | 'จบแล้ว'
 
 /*
  * โหลดเฉพาะข้อมูลมังงะที่มีอยู่จริงในระบบ
@@ -96,7 +95,6 @@ const completedTotal = computed(() => {
 ========================= */
 
 const showAddModal = ref(false)
-const isUploadingCover = ref(false)
 
 const form = reactive<{
   title: string
@@ -616,11 +614,6 @@ function backToWebsite() {
                 >
                   จบแล้ว
                 </option>
-                <option
-                  value="พักการเขียน"
-                >
-                  พักการเขียน
-                </option>
               </select>
 
             </div>
@@ -636,20 +629,8 @@ function backToWebsite() {
 
             <input
               v-model="form.cover"
-              type="url"
-              placeholder="วาง URL รูป หรืออัปโหลดไฟล์ด้านล่าง"
-            />
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              :disabled="isUploadingCover"
-              @change="handleNewCoverUpload"
-            />
-            <img
-              v-if="form.cover"
-              :src="form.cover"
-              alt="ตัวอย่างรูปปก"
-              style="display:block;max-width:120px;max-height:170px;object-fit:cover;margin-top:10px;border-radius:8px"
+              type="text"
+              placeholder="https://..."
             />
 
           </div>

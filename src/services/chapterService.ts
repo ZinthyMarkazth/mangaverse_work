@@ -35,6 +35,25 @@ export class ChapterService {
     }
   }
 
+  // Load chapter metadata and image counts only. Do not download every page image
+  // just to render the admin list (legacy Base64 images can freeze the browser).
+  async getAdminListByMangaId(mangaId: number): Promise<{ id: number; mangaId: number; chapterNumber: number; title: string; imageCount: number }[]> {
+    const supabase = requireSupabase()
+    const { data, error } = await supabase
+      .from('chapters')
+      .select('id,manga_id,chapter_number,title,chapter_images(image_order)')
+      .eq('manga_id', mangaId)
+      .order('chapter_number', { ascending: false })
+    if (error) throw error
+    return (data ?? []).map((row: any) => ({
+      id: Number(row.id),
+      mangaId: Number(row.manga_id),
+      chapterNumber: Number(row.chapter_number),
+      title: row.title ?? '',
+      imageCount: Array.isArray(row.chapter_images) ? row.chapter_images.length : 0,
+    }))
+  }
+
   async getByMangaId(mangaId: number): Promise<ChapterData[]> {
     const supabase = requireSupabase()
 

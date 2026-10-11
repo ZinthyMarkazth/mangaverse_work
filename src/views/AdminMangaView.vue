@@ -13,12 +13,10 @@ import {
 
 import { MangaService } from '../services/MangaService'
 import { ChapterService } from '../services/chapterService'
-import { uploadMangaImage } from '../services/imageUploadService'
 
 type MangaStatus =
   | 'กำลังดำเนินเรื่อง'
   | 'จบแล้ว'
-  | 'พักการเขียน'
 
 interface AdminChapter {
   id: number
@@ -234,15 +232,16 @@ function toast(
 
 
 async function loadChapters(): Promise<AdminChapter[]> {
-  const rows = await chapterService.getByMangaId(mangaId)
+  const rows = await chapterService.getAdminListByMangaId(mangaId)
 
   return rows.map((chapter) => ({
     id: chapter.id,
     mangaId: chapter.mangaId,
     number: chapter.chapterNumber,
     title: chapter.title,
-    imageCount: chapter.images.length,
-    images: [...chapter.images],
+    imageCount: chapter.imageCount,
+    // Load actual page images only when the user opens the edit form.
+    images: [],
   }))
 }
 
@@ -399,6 +398,37 @@ async function saveManga() {
    File To Data URL
 ========================= */
 
+function fileToDataURL(
+  file: File,
+): Promise<string> {
+  return new Promise(
+    (resolve, reject) => {
+      const reader =
+        new FileReader()
+
+      reader.onload = () => {
+        resolve(
+          String(
+            reader.result,
+          ),
+        )
+      }
+
+      reader.onerror = () => {
+        reject(
+          new Error(
+            'ไม่สามารถอ่านไฟล์ได้',
+          ),
+        )
+      }
+
+      reader.readAsDataURL(
+        file,
+      )
+    },
+  )
+}
+
 /* =========================
    Cover Upload
 ========================= */
@@ -432,7 +462,7 @@ async function handleCoverUpload(
 
   try {
     const imageData =
-      await uploadMangaImage(file, 'cover', mangaId)
+      await fileToDataURL(file)
 
     mangaForm.cover =
       imageData
@@ -491,9 +521,19 @@ function openAddChapterForm() {
    Edit Chapter
 ========================= */
 
-function openEditChapterForm(
+async function openEditChapterForm(
   chapter: AdminChapter,
 ) {
+  try {
+    const fullChapter = await chapterService.getById(chapter.id)
+    if (!fullChapter) { toast('ไม่พบตอนที่ต้องการแก้ไข'); return }
+    chapter.images = [...fullChapter.images]
+    chapter.imageCount = fullChapter.images.length
+  } catch (error) {
+    console.error('โหลดรูปตอนเพื่อแก้ไขไม่สำเร็จ', error)
+    toast('โหลดรูปตอนนี้ไม่สำเร็จ')
+    return
+  }
   editingChapterId.value =
     chapter.id
 
@@ -606,7 +646,9 @@ async function saveChapter() {
       }
 
       images.push(
-        await uploadMangaImage(file, 'page', mangaId),
+        await fileToDataURL(
+          file,
+        ),
       )
     }
 
@@ -682,7 +724,9 @@ async function saveChapter() {
       error,
     )
 
-    toast(error instanceof Error ? error.message : 'ไม่สามารถบันทึกตอนหรือรูปภาพได้')
+    toast(
+      'ไม่สามารถบันทึกรูปภาพได้',
+    )
   } finally {
     isSavingChapter.value =
       false
@@ -1240,20 +1284,15 @@ onBeforeUnmount(() => {
                 >
 
                   <option
-                    value="กำลังดำเนินเรื่อง"
+                    value="ongoing"
                   >
                     กำลังดำเนินเรื่อง
                   </option>
 
                   <option
-                    value="จบแล้ว"
+                    value="completed"
                   >
                     จบแล้ว
-                  </option>
-                  <option
-                    value="พักการเขียน"
-                  >
-                    พักการเขียน
                   </option>
 
                 </select>
