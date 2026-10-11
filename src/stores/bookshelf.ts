@@ -45,7 +45,7 @@ export const useBookshelfStore = defineStore('bookshelf', {
 
     removeFromBookshelf(mangaId: string | number) {
       this.mangaList = this.mangaList.filter(
-        (manga) => manga.id !== mangaId,
+    (manga) => String(manga.id) !== String(mangaId),
       )
 
       this.saveBookshelf()
@@ -56,7 +56,7 @@ export const useBookshelfStore = defineStore('bookshelf', {
       chapter: number,
     ) {
       const manga = this.mangaList.find(
-        (item) => item.id === mangaId,
+        (item) => String(item.id) === String(mangaId),
       )
 
       if (!manga) return

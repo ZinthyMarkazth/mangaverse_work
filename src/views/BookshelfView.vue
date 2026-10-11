@@ -56,8 +56,13 @@ function goHome() {
   router.push('/')
 }
 
-function openManga(id: string | number) {
-  router.push(`/manga/${id}`)
+function openManga(id: string | number | null | undefined) {
+  if (id == null || String(id).trim() === '' || String(id) === 'null') {
+    console.error('ไม่พบ ID ของมังงะ')
+    return
+  }
+
+  router.push(`/manga/${encodeURIComponent(String(id))}`)
 }
 
 function continueReading(
