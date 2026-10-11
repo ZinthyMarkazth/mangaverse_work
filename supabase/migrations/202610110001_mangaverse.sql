@@ -16,7 +16,7 @@ create table if not exists public.manga (
   description text not null default '',
   category text not null default '',
   latest_chapter numeric(8,2) not null default 0,
-  status text not null default 'กำลังดำเนินเรื่อง',
+  status text not null default 'ongoing' check (status in ('ongoing', 'completed', 'hiatus')),
   cover_path text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

@@ -5,6 +5,27 @@ import { Manga } from '@/models/Manga'
 const mangaList: Ref<Manga[]> = ref([])
 let loadPromise: Promise<void> | null = null
 
+function statusFromDatabase(value: unknown): string {
+  switch (String(value ?? '').toLowerCase()) {
+    case 'completed': return 'จบแล้ว'
+    case 'hiatus': return 'พักการเขียน'
+    case 'ongoing': return 'กำลังดำเนินเรื่อง'
+    case 'จบแล้ว': return 'จบแล้ว'
+    case 'พักการเขียน': return 'พักการเขียน'
+    default: return 'กำลังดำเนินเรื่อง'
+  }
+}
+
+function statusToDatabase(value: string): string {
+  switch (value) {
+    case 'จบแล้ว':
+    case 'completed': return 'completed'
+    case 'พักการเขียน':
+    case 'hiatus': return 'hiatus'
+    default: return 'ongoing'
+  }
+}
+
 function fromRow(row: Record<string, unknown>): Manga {
   return new Manga(
     Number(row.id),
@@ -13,7 +34,7 @@ function fromRow(row: Record<string, unknown>): Manga {
     String(row.description ?? ''),
     String(row.category ?? ''),
     Number(row.latest_chapter ?? 0),
-    String(row.status ?? 'กำลังดำเนินเรื่อง'),
+    statusFromDatabase(row.status),
     String(row.cover_path ?? ''),
   )
 }
@@ -25,7 +46,7 @@ function toRow(manga: Manga) {
     description: manga.description.trim(),
     category: manga.category.trim(),
     latest_chapter: Number(manga.latestChapter) || 0,
-    status: manga.status,
+    status: statusToDatabase(manga.status),
     cover_path: manga.cover.trim() || null,
   }
 }

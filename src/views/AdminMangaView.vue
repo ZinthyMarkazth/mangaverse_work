@@ -13,10 +13,12 @@ import {
 
 import { MangaService } from '../services/MangaService'
 import { ChapterService } from '../services/chapterService'
+import { uploadMangaImage } from '../services/imageUploadService'
 
 type MangaStatus =
   | 'กำลังดำเนินเรื่อง'
   | 'จบแล้ว'
+  | 'พักการเขียน'
 
 interface AdminChapter {
   id: number
@@ -397,37 +399,6 @@ async function saveManga() {
    File To Data URL
 ========================= */
 
-function fileToDataURL(
-  file: File,
-): Promise<string> {
-  return new Promise(
-    (resolve, reject) => {
-      const reader =
-        new FileReader()
-
-      reader.onload = () => {
-        resolve(
-          String(
-            reader.result,
-          ),
-        )
-      }
-
-      reader.onerror = () => {
-        reject(
-          new Error(
-            'ไม่สามารถอ่านไฟล์ได้',
-          ),
-        )
-      }
-
-      reader.readAsDataURL(
-        file,
-      )
-    },
-  )
-}
-
 /* =========================
    Cover Upload
 ========================= */
@@ -461,7 +432,7 @@ async function handleCoverUpload(
 
   try {
     const imageData =
-      await fileToDataURL(file)
+      await uploadMangaImage(file, 'cover', mangaId)
 
     mangaForm.cover =
       imageData
@@ -635,9 +606,7 @@ async function saveChapter() {
       }
 
       images.push(
-        await fileToDataURL(
-          file,
-        ),
+        await uploadMangaImage(file, 'page', mangaId),
       )
     }
 
@@ -713,9 +682,7 @@ async function saveChapter() {
       error,
     )
 
-    toast(
-      'ไม่สามารถบันทึกรูปภาพได้',
-    )
+    toast(error instanceof Error ? error.message : 'ไม่สามารถบันทึกตอนหรือรูปภาพได้')
   } finally {
     isSavingChapter.value =
       false
@@ -1282,6 +1249,11 @@ onBeforeUnmount(() => {
                     value="จบแล้ว"
                   >
                     จบแล้ว
+                  </option>
+                  <option
+                    value="พักการเขียน"
+                  >
+                    พักการเขียน
                   </option>
 
                 </select>

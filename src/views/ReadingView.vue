@@ -18,8 +18,8 @@ import { useBookshelfStore } from '@/stores/bookshelf'
 import { useAuthStore } from '@/stores/auth'
 
 import { useReadingHistoryStore } from '@/stores/readingHistory'
-import { ChapterService } from '@/services/chapterService'
 
+import { ChapterService } from '@/services/chapterService'
 
 interface AdminChapter {
   id: number
@@ -29,6 +29,44 @@ interface AdminChapter {
   images: string[]
 }
 
+const chapterService = new ChapterService()
+const chapters = ref<{
+  id: number
+  number: number
+  title: string
+  imageCount: number
+  images: string[]
+}[]>([])
+
+async function loadChapters() {
+  const id = mangaId.value
+
+  if (!Number.isFinite(id) || id <= 0) {
+    chapters.value = []
+    return
+  }
+
+  try {
+    const rows = await chapterService.getByMangaId(id)
+
+    if (id !== mangaId.value) return
+
+    chapters.value = rows.map((chapter) => ({
+      id: chapter.id,
+      number: chapter.chapterNumber,
+      title: chapter.title,
+      imageCount: chapter.images.length,
+      images: chapter.images,
+    }))
+  } catch (error) {
+    console.error('โหลดตอนสำหรับอ่านไม่สำเร็จ:', error)
+    chapters.value = []
+  }
+}
+
+watch(mangaId, () => {
+  void loadChapters()
+}, { immediate: true })
 
 const route = useRoute()
 
@@ -80,36 +118,133 @@ const manga = computed(() => {
 
 
 /* ========================================
-   Chapters (Supabase)
+   Chapter Storage
 ======================================== */
 
-const chapterService = new ChapterService()
-const chapters = ref<AdminChapter[]>([])
+const chapterStorageKey =
+  computed(() => {
 
-async function loadChapters() {
-  const id = mangaId.value
-  if (!Number.isFinite(id) || id <= 0) {
-    chapters.value = []
-    return
+    return `mangaverse_chapters_${mangaId.value}`
+
+  })
+
+
+/* ========================================
+   Load Chapters
+======================================== */
+
+function loadChapters(): AdminChapter[] {
+
+  const saved =
+    localStorage.getItem(
+      chapterStorageKey.value,
+    )
+
+  if (!saved) {
+
+    return []
+
   }
 
   try {
-    const rows = await chapterService.getByMangaId(id)
-    if (id !== mangaId.value) return
-    chapters.value = rows.map((chapter) => ({
-      id: chapter.id,
-      number: chapter.chapterNumber,
-      title: chapter.title,
-      imageCount: chapter.images.length,
-      images: [...chapter.images],
-    }))
-  } catch (error) {
-    console.error('โหลดตอนสำหรับอ่านไม่สำเร็จ:', error)
-    chapters.value = []
+
+    const parsed =
+      JSON.parse(saved)
+
+    if (!Array.isArray(parsed)) {
+
+      return []
+
+    }
+
+    return parsed
+
+      .map((chapter) => {
+
+        const images =
+          Array.isArray(
+            chapter.images,
+          )
+
+            ? chapter.images
+                .map(
+                  (image: unknown) =>
+                    String(image),
+                )
+                .filter(
+                  (image: string) =>
+                    image.length > 0,
+                )
+
+            : []
+
+        const imageCount =
+          images.length > 0
+
+            ? images.length
+
+            : Number(
+                chapter.imageCount ?? 0,
+              )
+
+        return {
+
+          id:
+            Number(
+              chapter.id,
+            ),
+
+          number:
+            Number(
+              chapter.number,
+            ),
+
+          title:
+            String(
+              chapter.title ?? '',
+            ),
+
+          imageCount,
+
+          images,
+
+        }
+
+      })
+
+      .filter(
+        (chapter) =>
+          Number.isFinite(
+            chapter.id,
+          ) &&
+          Number.isFinite(
+            chapter.number,
+          ),
+      )
+
+  } catch {
+
+    return []
+
   }
+
 }
 
-watch(mangaId, () => { void loadChapters() }, { immediate: true })
+
+/* ========================================
+   Chapters
+======================================== */
+
+const chapters =
+  computed(() => {
+
+    return loadChapters().sort(
+      (a, b) =>
+        a.number - b.number,
+    )
+
+  })
+
 
 /* ========================================
    Current Chapter
