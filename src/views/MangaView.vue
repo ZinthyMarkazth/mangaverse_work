@@ -18,6 +18,14 @@ import { useReadingHistoryStore } from '@/stores/readingHistory'
 import { MangaService } from '@/services/MangaService'
 import { ChapterService } from '@/services/chapterService'
 
+interface AdminChapter {
+  id: number
+  number: number
+  title: string
+  imageCount: number
+}
+
+
 const route = useRoute()
 const router = useRouter()
 
@@ -57,6 +65,10 @@ const manga = computed(() => {
 /* ========================================
    Chapters
 ======================================== */
+
+const chapterStorageKey = computed(() => {
+  return `mangaverse_chapters_${mangaId.value}`
+})
 
 const chapterService = new ChapterService()
 const chapters = ref<{
