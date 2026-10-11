@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1300" viewBox="0 0 900 1300">
+<rect width="900" height="1300" fill="#e5e7eb"/>
+<rect x="45" y="45" width="810" height="1210" rx="12" fill="none" stroke="#1f2937" stroke-width="8"/>
+<path d="M120 780 L450 170 L780 780 Z" fill="#1f2937" opacity=".12"/>
+<circle cx="450" cy="440" r="155" fill="#1f2937" opacity=".18"/>
+<path d="M200 940 Q450 650 700 940 L760 1130 L140 1130Z" fill="#1f2937" opacity=".22"/>
+<text x="450" y="150" font-family="Arial,sans-serif" font-size="42" font-weight="bold" text-anchor="middle" fill="#1f2937">DEMO PAGE</text>
+<text x="450" y="1190" font-family="Arial,sans-serif" font-size="30" text-anchor="middle" fill="#1f2937">ACTION SCENE</text>
+<text x="450" y="1230" font-family="Arial,sans-serif" font-size="18" text-anchor="middle" fill="#1f2937">PLACEHOLDER FOR READER TESTING</text>
+</svg>

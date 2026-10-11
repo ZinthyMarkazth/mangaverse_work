@@ -58,6 +58,37 @@ export class MangaService {
       throw error
     }
     mangaList.value = (data ?? []).map((row) => fromRow(row as Record<string, unknown>))
+    this.seedDemoChapters(mangaList.value)
+  }
+
+  /** Seed local placeholder chapters for testing the reader flow. */
+  private seedDemoChapters(manga: Manga[]): void {
+    if (typeof window === 'undefined') return
+
+    const demos = [
+      { title: 'The Bully In-Charge', page: '/demo-pages/action.svg' },
+      { title: 'The Beginning After the End', page: '/demo-pages/fantasy.svg' },
+      { title: 'Magic Emperor', page: '/demo-pages/magic.svg' },
+    ]
+
+    for (const demo of demos) {
+      const item = manga.find((entry) => entry.title.trim().toLowerCase() === demo.title.toLowerCase())
+      if (!item) continue
+
+      const key = `mangaverse_chapters_${item.id}`
+      if (localStorage.getItem(key)) continue
+
+      const chapters = [1, 2, 3].map((number) => ({
+        id: Number(item.id) * 1000 + number,
+        mangaId: Number(item.id),
+        number,
+        chapterNumber: number,
+        title: `ตอนทดลองที่ ${number}`,
+        imageCount: 2,
+        images: [demo.page, demo.page],
+      }))
+      localStorage.setItem(key, JSON.stringify(chapters))
+    }
   }
 
  getAllManga(): Manga[] {
